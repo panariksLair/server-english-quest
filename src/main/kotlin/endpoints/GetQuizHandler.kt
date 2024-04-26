@@ -2,6 +2,7 @@ package com.github.panarik.endpoints
 
 import com.github.panarik.requests.Request
 import com.github.panarik.response.Response
+import com.github.panarik.service.QuizBuilder
 import com.sun.net.httpserver.HttpHandler
 
 class GetQuizHandler : Handler(), HttpHandler {
