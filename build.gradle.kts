@@ -10,6 +10,14 @@ repositories {
 }
 
 dependencies {
+
+    //Logging
+    implementation("org.slf4j:slf4j-simple:2.0.7")
+
+    //HTTP Client
+    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
+
+    //Testing
     testImplementation(kotlin("test"))
 }
 
