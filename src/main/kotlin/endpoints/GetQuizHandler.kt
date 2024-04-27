@@ -10,7 +10,7 @@ class GetQuizHandler : Handler(), HttpHandler {
     override fun responseFromClientRequest(request: Request): Response =
         if (isValidRequest(request)) {
             val quiz = QuizBuilder().build()
-            Response(200, quiz.quiz)
+            Response(200, quiz)
         } else Response(404, "Client error")
 
     override fun isValidRequest(request: Request): Boolean = true

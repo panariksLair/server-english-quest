@@ -21,9 +21,12 @@ class QuizBuilder {
     /**
      * @return Quiz body or empty string if something went wrong.
      */
-    fun build(): QuizResponse {
+    fun build(): String {
         buildQuiz()
-        return getQuiz()
+        val quizResponse = getRawQuiz()
+        val quiz = parseRawQuiz(quizResponse)
+        val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz))
+        return result
     }
 
     private fun buildQuiz() {
@@ -57,7 +60,7 @@ class QuizBuilder {
         }
     }
 
-    private fun getQuiz(): QuizResponse {
+    private fun getRawQuiz(): QuizResponse {
         if (idResponse?.isNotEmpty() == true) {
             val replicate: QuizBuilderResponse = jacksonObjectMapper().readValue(idResponse!!)
             val request = Request.Builder()
@@ -102,7 +105,7 @@ class QuizBuilder {
             Input(
                 top_k = 0,
                 top_p = 0.9,
-                prompt = "Make one example of Quiz for learning English.\\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. Summary. Two words with current quiz name.\\n2. Question.\\n3. Three wrong answers. One word each.\\n4. One right answer. One word.",
+                prompt = "Make one example of very random Quiz for learning English. Use any possible questions. Do not use Hello as right answer.\\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. Summary. Several words with current quiz name.\\n2. Question.\\n3. Three wrong answers. One word each.\\n4. One right answer. One word.",
                 temperature = 0.6,
                 system_prompt = "You are a English teacher",
                 length_penalty = 1,
@@ -113,6 +116,38 @@ class QuizBuilder {
             )
         )
         return jacksonObjectMapper().writeValueAsString(request)
+    }
+
+    /**
+     * Input example:
+     *
+     * Here is an example of a quiz for learning English at the A1 level:
+     *
+     * **Summary:** "My Family"
+     *
+     * **Question:** What is the person you live with called?
+     *
+     * **Wrong answers:**
+     *
+     * 1. Friend
+     * 2. Teacher
+     * 3. Stranger
+     *
+     * **Right answer:** Family
+     */
+    private fun parseRawQuiz(quizResponse: QuizResponse): Quiz {
+        val summary = Regex("(?<=\\*\\*Summary:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
+        val question = Regex("(?<=\\*\\*Question:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
+        val wrongAnswers =
+            Regex("(?<=\\*\\*Wrong [Aa]nswers:\\*\\*)([\\S\\s]+)(?=(\\*\\*Right [Aa]nswer:\\*\\*))")
+                .find(quizResponse.quiz)?.value ?: ""
+        val wrongAnswer1 = wrongAnswers.substringAfter("1. ").substringBefore('\n')
+        val wrongAnswer2 = wrongAnswers.substringAfter("2. ").substringBefore('\n')
+        val wrongAnswer3 = wrongAnswers.substringAfter("3. ").substringBefore('\n')
+        val rightAnswerRaw =
+            Regex("(?<=\\*\\*Right [Aa]nswer:\\*\\*)[\\S\\s]+").find(quizResponse.quiz)?.value ?: ""
+        val rightAnswer = rightAnswerRaw.replace("\n", "").replace(" ", "")
+        return Quiz(summary, question, listOf(wrongAnswer1, wrongAnswer2, wrongAnswer3), rightAnswer)
     }
 
 }
