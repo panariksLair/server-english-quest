@@ -16,6 +16,7 @@ dependencies {
 
     //HTTP Client
     implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
 
     //Testing
     testImplementation(kotlin("test"))

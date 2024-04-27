@@ -1,7 +1,6 @@
 package com.github.panarik.request
 
 import com.github.panarik.log
-import com.github.panarik.requests.Request
 
 private const val TAG = "REQUEST_VERIFICATIONS:"
 

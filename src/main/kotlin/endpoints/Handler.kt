@@ -4,7 +4,7 @@ import com.github.panarik.ServerState
 import com.github.panarik.States
 import com.github.panarik.log
 import com.github.panarik.request.RequestVerifications
-import com.github.panarik.requests.Request
+import com.github.panarik.request.Request
 import com.github.panarik.response.Response
 import com.github.panarik.response.ResponseSender
 import com.sun.net.httpserver.HttpExchange

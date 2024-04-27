@@ -1,4 +1,4 @@
-package com.github.panarik.requests
+package com.github.panarik.request
 
 import com.sun.net.httpserver.Headers
 
