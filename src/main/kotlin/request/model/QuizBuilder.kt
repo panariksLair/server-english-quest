@@ -107,7 +107,7 @@ class QuizBuilder {
             Input(
                 top_k = 0,
                 top_p = 0.9,
-                prompt = "Create one Quiz for learn English ${if (theme.isNotEmpty()) "about $theme " else ""}. \\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. One field: **Summary**.\\n2. One field: **Question**. \\n3. Three wrong answers. \\n4. One right answer.",
+                prompt = "Create one Quiz for learn English ${if (theme.isNotEmpty()) "about $theme " else ""}. \\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. One field: **Summary**.\\n2. One field: **Question**. \\n3. One text block named **Wrong Answers** with three wrong answers. \\n4. One text block named **Right answer** with right answer.",
                 temperature = 0.6,
                 system_prompt = "You are a English teacher",
                 length_penalty = 1,
@@ -139,7 +139,7 @@ class QuizBuilder {
      */
     private fun parseRawQuiz(quizResponse: QuizResponse): Quiz {
         try {
-            val summary = Regex("(?<=\\*\\*Summary:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
+            val summary = getSummary(quizResponse.quiz)
             val question = getQuestion(quizResponse.quiz)
             val rightAnswer = getRightAnswer(quizResponse.quiz)
             val answers = getWrongAnswers(quizResponse.quiz)
@@ -151,19 +151,40 @@ class QuizBuilder {
 
     }
 
-    private fun getQuestion(input: String): String {
-        val block = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers:))").find(input)?.value ?: ""
+    private fun getSummary(input: String): String {
+        val block = Regex("(?<=Summary)([\\S\\s]+)(?=(Question))").find(input)?.value ?: ""
         try {
             val lines = block.split("\n")
-            val question = lines.filter { it.contains(Regex("[A-Za-z]")) }[0]
-            val prefix = Regex("^[*: \\d\\.]+").find(question)?.value ?: ""
-            var result = ""
+            val rawSummary = lines.first { it.contains(Regex("[A-Za-z]")) }
+            val prefix = Regex("^[*: \\d\\.]+").find(rawSummary)?.value ?: ""
+            var summary = ""
             if (prefix == " ") {
-                result = question.drop(1)
+                summary = rawSummary.drop(1)
             } else {
-                result = question.replace(prefix, "")
+                summary = rawSummary.replace(prefix, "")
             }
-            return result
+            return summary
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during parsing 'Summary' block. Original exception: ${e.message}. Original question block: $block")
+            return ""
+        }
+
+    }
+
+    private fun getQuestion(input: String): String {
+        val block = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers))").find(input)?.value ?: ""
+        try {
+            val lines = block.split("\n")
+            val questionLines = lines.filter { it.contains(Regex("[A-Za-z]")) }.toMutableList()
+            val prefix = Regex("^[*: \\d\\.]+").find(questionLines[0])?.value ?: ""
+            val questionFirstLine = if (prefix == " ") {
+                questionLines[0].drop(1)
+            } else {
+                questionLines[0].replace(prefix, "")
+            }
+            questionLines[0] = questionFirstLine
+            val question = questionLines.joinToString("\n")
+            return question
         } catch (e: Exception) {
             log.error("$TAG Error caught during parsing 'Question' block. Original exception: ${e.message}. Original question block: $block")
             return ""
@@ -178,7 +199,7 @@ class QuizBuilder {
         try {
             val lines = block.split("\n")
             val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
-            val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([a-d]\\) )"), "") }
+            val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([A-da-d]\\) )"), "") }
             return answers
         } catch (e: Exception) {
             log.error("$TAG Error caught during parsing 'Wrong answer' block. Original exception: ${e.message}. Original question block: $block")
@@ -191,7 +212,7 @@ class QuizBuilder {
         val block = Regex("(?<=\\*\\*Right [Aa]nswer:\\*\\*)[\\S\\s]+").find(input)?.value ?: ""
         try {
             val line = Regex(".+").find(block)?.value ?: "" // first line
-            val prefix = Regex("(^[* \\d\\.\\n]+)|([a-d]\\) )").find(line)?.value ?: ""
+            val prefix = Regex("(^[* \\d\\.\\n]+)|([A-Da-d]\\) )").find(line)?.value ?: ""
             val result = if (prefix == " ") {
                 line.drop(1)
             } else {
