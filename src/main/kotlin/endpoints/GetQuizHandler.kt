@@ -9,7 +9,8 @@ class GetQuizHandler : Handler(), HttpHandler {
 
     override fun responseFromClientRequest(request: Request): Response =
         if (isValidRequest(request)) {
-            val quiz = QuizBuilder().build()
+            val difficulty = request.headers["Difficulty"]?.get(0) ?: "B1"
+            val quiz = QuizBuilder().build(difficulty)
             Response(200, quiz)
         } else Response(404, "Client error")
 

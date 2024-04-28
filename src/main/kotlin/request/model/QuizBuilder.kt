@@ -10,6 +10,7 @@ import com.github.panarik.request.model.replicate.get_quiz.QuizResponse
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
+import kotlin.random.Random
 
 private const val TAG = "[QuizBuilder]"
 
@@ -21,18 +22,18 @@ class QuizBuilder {
     /**
      * @return Quiz body or empty string if something went wrong.
      */
-    fun build(): String {
-        buildQuiz()
+    fun build(difficulty: String): String {
+        buildQuiz(difficulty)
         val quizResponse = getRawQuiz()
         val quiz = parseRawQuiz(quizResponse)
         val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz))
         return result
     }
 
-    private fun buildQuiz() {
+    private fun buildQuiz(difficulty: String) {
         val request = Request.Builder()
             .url("https://api.replicate.com/v1/models/meta/meta-llama-3-8b-instruct/predictions")
-            .method("POST", createRequest("A1").toRequestBody())
+            .method("POST", createRequest(difficulty, themeBuilder(difficulty)).toRequestBody())
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer r8_TF9Xx4keKqZHPRfFUYXEZ344nlyg5Iu1QiT3x")
             .build()
@@ -79,7 +80,8 @@ class QuizBuilder {
                 override fun onResponse(call: Call, response: Response) {
                     if (response.code == 200) {
                         log.info("$TAG Response code = 200. Quiz is received!")
-                        this@QuizBuilder.quizResponse = response.body.string()
+                        val quiz = response.body.string()
+                        this@QuizBuilder.quizResponse = quiz
                     } else {
                         log.info("$TAG Response code = ${response.code}. Message: ${response.body.string()}")
                         this@QuizBuilder.quizResponse = ""
@@ -100,12 +102,12 @@ class QuizBuilder {
         }
     }
 
-    private fun createRequest(difficulty: String): String {
+    private fun createRequest(difficulty: String, theme: String): String {
         val request = QuizBuilderRequest(
             Input(
                 top_k = 0,
                 top_p = 0.9,
-                prompt = "Make one example of very random Quiz for learning English. Use any possible questions. Do not use Hello as right answer.\\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. Summary. Several words with current quiz name.\\n2. Question.\\n3. Three wrong answers. One word each.\\n4. One right answer. One word.",
+                prompt = "Create one Quiz for learn English ${if (theme.isNotEmpty()) "about $theme " else ""}. \\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. One field: **Summary**.\\n2. One field: **Question**. \\n3. Three wrong answers. \\n4. One right answer.",
                 temperature = 0.6,
                 system_prompt = "You are a English teacher",
                 length_penalty = 1,
@@ -136,18 +138,107 @@ class QuizBuilder {
      * **Right answer:** Family
      */
     private fun parseRawQuiz(quizResponse: QuizResponse): Quiz {
-        val summary = Regex("(?<=\\*\\*Summary:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
-        val question = Regex("(?<=\\*\\*Question:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
-        val wrongAnswers =
-            Regex("(?<=\\*\\*Wrong [Aa]nswers:\\*\\*)([\\S\\s]+)(?=(\\*\\*Right [Aa]nswer:\\*\\*))")
-                .find(quizResponse.quiz)?.value ?: ""
-        val wrongAnswer1 = wrongAnswers.substringAfter("1. ").substringBefore('\n')
-        val wrongAnswer2 = wrongAnswers.substringAfter("2. ").substringBefore('\n')
-        val wrongAnswer3 = wrongAnswers.substringAfter("3. ").substringBefore('\n')
-        val rightAnswerRaw =
-            Regex("(?<=\\*\\*Right [Aa]nswer:\\*\\*)[\\S\\s]+").find(quizResponse.quiz)?.value ?: ""
-        val rightAnswer = rightAnswerRaw.replace("\n", "").replace(" ", "")
-        return Quiz(summary, question, listOf(wrongAnswer1, wrongAnswer2, wrongAnswer3), rightAnswer)
+        try {
+            val summary = Regex("(?<=\\*\\*Summary:\\*\\* )(.+)").find(quizResponse.quiz)?.value ?: ""
+            val question = getQuestion(quizResponse.quiz)
+            val rightAnswer = getRightAnswer(quizResponse.quiz)
+            val answers = getWrongAnswers(quizResponse.quiz)
+            return Quiz(summary, question, answers, rightAnswer)
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during raw quiz parsing. Original exception: ${e.message}. Original raw quiz: ${quizResponse.quiz}")
+            return Quiz("", "", emptyList(), "")
+        }
+
     }
 
+    private fun getQuestion(input: String): String {
+        val block = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers:))").find(input)?.value ?: ""
+        try {
+            val lines = block.split("\n")
+            val question = lines.filter { it.contains(Regex("[A-Za-z]")) }[0]
+            val prefix = Regex("^[*: \\d\\.]+").find(question)?.value ?: ""
+            var result = ""
+            if (prefix == " ") {
+                result = question.drop(1)
+            } else {
+                result = question.replace(prefix, "")
+            }
+            return result
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during parsing 'Question' block. Original exception: ${e.message}. Original question block: $block")
+            return ""
+        }
+
+    }
+
+    private fun getWrongAnswers(input: String): List<String> {
+        val block =
+            Regex("(?<=\\*\\*Wrong [Aa]nswers:\\*\\*)([\\S\\s]+)(?=(\\*\\*Right [Aa]nswer:\\*\\*))")
+                .find(input)?.value ?: ""
+        try {
+            val lines = block.split("\n")
+            val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
+            val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([a-d]\\) )"), "") }
+            return answers
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during parsing 'Wrong answer' block. Original exception: ${e.message}. Original question block: $block")
+            return emptyList()
+        }
+
+    }
+
+    private fun getRightAnswer(input: String): String {
+        val block = Regex("(?<=\\*\\*Right [Aa]nswer:\\*\\*)[\\S\\s]+").find(input)?.value ?: ""
+        try {
+            val line = Regex(".+").find(block)?.value ?: "" // first line
+            val prefix = Regex("(^[* \\d\\.\\n]+)|([a-d]\\) )").find(line)?.value ?: ""
+            val result = if (prefix == " ") {
+                line.drop(1)
+            } else {
+                line.replace(prefix, "")
+            }
+            return result
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during parsing 'Right answer' block. Original exception: ${e.message}. Original question block: $block")
+            return ""
+        }
+    }
+
+    private fun themeBuilder(difficulty: String): String {
+        val themes = when (difficulty) {
+            "A1", "A2" -> {
+                listOf(
+                    "",
+                    "Present Simple",
+                    "Past Simple",
+                    "Present Continuous",
+                    "Past Continuous",
+                    "Future Simple",
+                    "Present Perfect Simple"
+                )
+            }
+
+            "B1", "B2" -> {
+                listOf(
+                    "",
+                    "Gradable and Non-gradable",
+                    "British English vs. American English",
+                    "Capital Letters and Apostrophes",
+                    "Conditionals: Third and Mixed",
+                    "Conditionals: Zero, First, and Second",
+                    "Contrasting Ideas: ‘Although,’ ‘Despite,’ and Others",
+                    "Different Uses of ‘Used To’",
+                    "Future Continuous and Future Perfect",
+                    "Future Forms: ‘Will,’ ‘Be Going To,’ and Present Continuous",
+                    "Intensifiers: ‘So’ and ‘Such’",
+                    "Modals: Deductions About the Past and Present"
+                )
+            }
+
+            else -> {
+                listOf("")
+            }
+        }
+        return themes[Random.nextInt(0, themes.lastIndex)]
+    }
 }
