@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.23"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0-Beta2"
+    application
 }
 
 group = "com.github.panarik"
@@ -27,4 +29,8 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(8)
+}
+
+application {
+    mainClass.set("StartKt")
 }
