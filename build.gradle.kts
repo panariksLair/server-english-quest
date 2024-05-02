@@ -46,5 +46,5 @@ tasks.test {
 }
 
 application {
-    mainClass.set("StartKt")
+    mainClass.set("com.github.panarik.StartKt")
 }
