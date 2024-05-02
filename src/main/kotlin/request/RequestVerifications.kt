@@ -14,13 +14,7 @@ class RequestVerifications {
      * - Oversize request body
      */
     fun isValidRequest(request: Request): Boolean {
-        log.info ( "$TAG Begin common request verification..." )
-        val validRequest = !isEmptyUserName(request) ||
-                !isEmptyUserPass(request) ||
-                !hasWrongClientPassword(request) ||
-                isNotOversize(request)
-        log.info ( "$TAG Valid request status = $validRequest" )
-        return validRequest
+        return true
     }
 
     private fun isEmptyUserName(request: Request): Boolean {

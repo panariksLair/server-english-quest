@@ -40,11 +40,10 @@ abstract class Handler {
      */
     private fun responseFromServerRules(): Response? = when (ServerState.getState()) {
         States.DATABASE_ERROR -> {
-            log.error ( "HANDLER_ROOT: Database connection error during client GET request." )
+            log.error("HANDLER_ROOT: Database connection error during client GET request.")
             Response(500, "Database connection error: Please contact administrator.")
         }
 
-        //ToDo: check here request against security rules. Return response if something happening wrong.
         else -> null
     }
 

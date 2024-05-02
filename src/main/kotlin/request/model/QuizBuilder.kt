@@ -26,8 +26,15 @@ class QuizBuilder {
         buildQuiz(difficulty)
         val quizResponse = getRawQuiz()
         val quiz = parseRawQuiz(quizResponse)
-        val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz))
-        return result
+        log.info("$TAG Quiz is finished.")
+        return try {
+            val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz))
+            result
+        } catch (e: Exception) {
+            log.error("Error caught during quiz writing. Original exception: ${e.message}")
+            ""
+        }
+
     }
 
     private fun buildQuiz(difficulty: String) {
@@ -89,15 +96,20 @@ class QuizBuilder {
                 }
             })
             while (quizResponse == null) {
-                log.info("$TAG Waiting replicate.com answer...")
+                log.info("$TAG Getting raw quiz $idResponse from replicate.com...")
                 Thread.sleep(500)
             }
             return if (quizResponse?.isNotEmpty() == true) {
-                jacksonObjectMapper().readValue(quizResponse!!)
+                log.info("$TAG Raw quiz response: $quizResponse")
+                val quiz: QuizResponse = jacksonObjectMapper().readValue(quizResponse!!)
+                log.info("$TAG Raw quiz output: ${quiz.output.joinToString("")}")
+                quiz
             } else {
+                log.error("$TAG Empty quiz response received.")
                 QuizResponse(emptyList())
             }
         } else {
+            log.error("$TAG Empty quiz id received from replicate.com")
             return QuizResponse(emptyList())
         }
     }
@@ -138,12 +150,20 @@ class QuizBuilder {
      * **Right answer:** Family
      */
     private fun parseRawQuiz(quizResponse: QuizResponse): Quiz {
+        log.info("$TAG Starting parse raw quiz....")
         try {
             val summary = getSummary(quizResponse.quiz)
+            log.info("$TAG Summary: $summary")
             val question = getQuestion(quizResponse.quiz)
+            log.info("$TAG Question: $question")
             val rightAnswer = getRightAnswer(quizResponse.quiz)
+            log.info("$TAG Right Answer: $rightAnswer")
             val answers = getWrongAnswers(quizResponse.quiz)
-            return Quiz(summary, question, answers, rightAnswer)
+            log.info("$TAG Wrong Answers: ${answers.joinToString()}")
+            log.info("$TAG Raw quiz is parsed.")
+            val quiz = Quiz(summary, question, answers, rightAnswer)
+            verifyQuiz(quiz)
+            return quiz
         } catch (e: Exception) {
             log.error("$TAG Error caught during raw quiz parsing. Original exception: ${e.message}. Original raw quiz: ${quizResponse.quiz}")
             return Quiz("", "", emptyList(), "")
@@ -152,7 +172,9 @@ class QuizBuilder {
     }
 
     private fun getSummary(input: String): String {
-        val block = Regex("(?<=Summary)([\\S\\s]+)(?=(Question))").find(input)?.value ?: ""
+        val regex = Regex("(?<=Summary)([\\S\\s]+)(?=(Question))")
+        val block = regex.find(input)?.value ?: ""
+        log.info("$TAG Summary regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawSummary = lines.first { it.contains(Regex("[A-Za-z]")) }
@@ -168,11 +190,12 @@ class QuizBuilder {
             log.error("$TAG Error caught during parsing 'Summary' block. Original exception: ${e.message}. Original question block: $block")
             return ""
         }
-
     }
 
     private fun getQuestion(input: String): String {
-        val block = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers))").find(input)?.value ?: ""
+        val regex = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers))")
+        val block = regex.find(input)?.value ?: ""
+        log.info("$TAG Question regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val questionLines = lines.filter { it.contains(Regex("[A-Za-z]")) }.toMutableList()
@@ -193,9 +216,9 @@ class QuizBuilder {
     }
 
     private fun getWrongAnswers(input: String): List<String> {
-        val block =
-            Regex("(?<=Wrong [Aa]nswers)([\\S\\s]+)(?=(Right [Aa]nswer))")
-                .find(input)?.value ?: ""
+        val regex = Regex("(?<=Wrong [Aa]nswers)([\\S\\s]+)(?=(Right [Aa]nswer))")
+        val block = regex.find(input)?.value ?: ""
+        log.info("$TAG WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
@@ -209,7 +232,9 @@ class QuizBuilder {
     }
 
     private fun getRightAnswer(input: String): String {
-        val block = Regex("(?<=Right [Aa]nswer)[\\S\\s]+").find(input)?.value ?: ""
+        val regex = Regex("(?<=Right [Aa]nswer)[\\S\\s]+")
+        val block = regex.find(input)?.value ?: ""
+        log.info("$TAG WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawAnswersLines = lines.filter { it.contains(Regex("[A-Za-z]")) }
@@ -264,6 +289,16 @@ class QuizBuilder {
                 listOf("")
             }
         }
-        return themes[Random.nextInt(0, themes.lastIndex)]
+        val theme = themes[Random.nextInt(0, themes.lastIndex)]
+        log.info("$TAG Current quiz theme: $theme")
+        return theme
+    }
+
+    private fun verifyQuiz(quiz: Quiz) {
+        if (quiz.isValid()) {
+            log.info("$TAG Quiz is valid.")
+        } else {
+            log.error("$TAG Quiz is invalid. Summary=${quiz.summary} Question=${quiz.question} RightAnswer=${quiz.right_answer} WrongAnswers=${quiz.wrong_answers.joinToString()}")
+        }
     }
 }

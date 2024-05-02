@@ -1,5 +1,7 @@
 package com.github.panarik.request.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 /**
  * Raw import:
  * Here is an example of a quiz for learning English at the A1 level:
@@ -21,4 +23,11 @@ data class Quiz(
     val question: String,
     val wrong_answers: List<String>,
     val right_answer: String
-)
+) {
+
+
+    @JsonIgnore
+    fun isValid(): Boolean =
+        summary.isNotEmpty() && question.isNotEmpty() && wrong_answers.isNotEmpty() && right_answer.isNotEmpty()
+
+}
