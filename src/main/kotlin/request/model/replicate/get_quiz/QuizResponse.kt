@@ -40,4 +40,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
  *  }
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class QuizResponse(val output: List<String>, val quiz: String = output.joinToString(""))
+data class QuizResponse(val id:String, val output: List<String>, val quiz: String = output.joinToString(""))

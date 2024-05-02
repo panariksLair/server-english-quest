@@ -10,13 +10,13 @@ import com.github.panarik.request.model.replicate.get_quiz.QuizResponse
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
+import java.util.UUID
 import kotlin.random.Random
-
-private const val TAG = "[QuizBuilder]"
 
 class QuizBuilder {
 
-    private var idResponse: String? = null
+    private var TAG = "[QuizBuilder]"
+    private var questBuilderResponse: QuizBuilderResponse? = null
     private var quizResponse: String? = null
 
     /**
@@ -28,7 +28,7 @@ class QuizBuilder {
         val quiz = parseRawQuiz(quizResponse)
         log.info("$TAG Quiz is finished.")
         return try {
-            val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz))
+            val result = jacksonObjectMapper().writeValueAsString(QuizSession(questBuilderResponse?.id ?: "", quiz))
             result
         } catch (e: Exception) {
             log.error("Error caught during quiz writing. Original exception: ${e.message}")
@@ -38,6 +38,7 @@ class QuizBuilder {
     }
 
     private fun buildQuiz(difficulty: String) {
+        log.info("$TAG Start building new quiz...")
         val request = Request.Builder()
             .url("https://api.replicate.com/v1/models/meta/meta-llama-3-8b-instruct/predictions")
             .method("POST", createRequest(difficulty, themeBuilder(difficulty)).toRequestBody())
@@ -48,31 +49,34 @@ class QuizBuilder {
 
             override fun onFailure(call: Call, e: IOException) {
                 log.error("$TAG Error caught during quiz building. Original exception: ${e.message}")
-                idResponse = ""
+                questBuilderResponse = QuizBuilderResponse("")
             }
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.code == 201) {
-                    log.info("$TAG Response code = 201. Quiz is created!")
-                    this@QuizBuilder.idResponse = response.body.string()
+                    log.info("$TAG Quiz is created! Response code = 201.")
+                    val quizId: QuizBuilderResponse = jacksonObjectMapper().readValue(response.body.string())
+                    this@QuizBuilder.questBuilderResponse = quizId
+                    TAG = TAG.plus(" (${quizId.id})")
                 } else {
-                    log.info("$TAG Response code = ${response.code}. Message: ${response.body.string()}")
-                    this@QuizBuilder.idResponse = ""
+                    log.error("$TAG Response code = ${response.code}. Message: ${response.body.string()}")
+                    TAG = TAG.plus(": ${UUID.randomUUID()}")
+                    this@QuizBuilder.questBuilderResponse = QuizBuilderResponse("")
                 }
 
             }
         })
-        while (idResponse == null) {
+        while (questBuilderResponse == null) {
             log.info("$TAG Waiting replicate.com answer...")
             Thread.sleep(500)
         }
     }
 
     private fun getRawQuiz(): QuizResponse {
-        if (idResponse?.isNotEmpty() == true) {
-            val replicate: QuizBuilderResponse = jacksonObjectMapper().readValue(idResponse!!)
+        if (questBuilderResponse?.id?.isNotEmpty() == true) {
+            val id = questBuilderResponse?.id
             val request = Request.Builder()
-                .url("https://api.replicate.com/v1/predictions/${replicate.id}")
+                .url("https://api.replicate.com/v1/predictions/$id")
                 .method("GET", null)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer r8_TF9Xx4keKqZHPRfFUYXEZ344nlyg5Iu1QiT3x")
@@ -96,21 +100,21 @@ class QuizBuilder {
                 }
             })
             while (quizResponse == null) {
-                log.info("$TAG Getting raw quiz $idResponse from replicate.com...")
+                log.info("$TAG Getting raw quiz $questBuilderResponse from replicate.com...")
                 Thread.sleep(500)
             }
             return if (quizResponse?.isNotEmpty() == true) {
                 log.info("$TAG Raw quiz response: $quizResponse")
                 val quiz: QuizResponse = jacksonObjectMapper().readValue(quizResponse!!)
-                log.info("$TAG Raw quiz output: ${quiz.output.joinToString("")}")
+                log.info("""$TAG Raw quiz output: ${quiz.output.joinToString("")}""")
                 quiz
             } else {
                 log.error("$TAG Empty quiz response received.")
-                QuizResponse(emptyList())
+                QuizResponse(questBuilderResponse?.id ?: "", emptyList())
             }
         } else {
             log.error("$TAG Empty quiz id received from replicate.com")
-            return QuizResponse(emptyList())
+            return QuizResponse(questBuilderResponse?.id ?: "", emptyList())
         }
     }
 
