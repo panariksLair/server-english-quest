@@ -70,6 +70,8 @@ class QuizBuilder {
             log.info("$TAG Waiting replicate.com answer...")
             Thread.sleep(500)
         }
+        // ToDo: also waiting little time because we have bug from Replicate side.
+        Thread.sleep(2000)
     }
 
     private fun getRawQuiz(): QuizResponse {
