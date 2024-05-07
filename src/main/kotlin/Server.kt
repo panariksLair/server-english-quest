@@ -1,6 +1,6 @@
 package com.github.panarik
 
-import com.github.panarik.endpoints.GetQuizHandler
+import com.github.panarik.endpoints.buildQuiz.GetQuizHandler
 import com.sun.net.httpserver.HttpServer
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress

@@ -1,8 +1,10 @@
-package com.github.panarik.request.model
+package com.github.panarik.endpoints.buildQuiz
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.panarik.log
+import com.github.panarik.request.model.Quiz
+import com.github.panarik.request.model.QuizSession
 import com.github.panarik.request.model.replicate.buildQuiz.Input
 import com.github.panarik.request.model.replicate.buildQuiz.QuizBuilderRequest
 import com.github.panarik.request.model.replicate.build_quiz.QuizBuilderResponse
@@ -22,19 +24,12 @@ class QuizBuilder {
     /**
      * @return Quiz body or empty string if something went wrong.
      */
-    fun build(difficulty: String): String {
+    fun build(difficulty: String): Quiz {
         buildQuiz(difficulty)
         val quizResponse = getRawQuiz()
         val quiz = parseRawQuiz(quizResponse)
         log.info("$TAG Quiz is finished.")
-        return try {
-            val result = jacksonObjectMapper().writeValueAsString(QuizSession(questBuilderResponse?.id ?: "", quiz))
-            result
-        } catch (e: Exception) {
-            log.error("Error caught during quiz writing. Original exception: ${e.message}")
-            ""
-        }
-
+        return quiz
     }
 
     private fun buildQuiz(difficulty: String) {
@@ -167,12 +162,12 @@ class QuizBuilder {
             val answers = getWrongAnswers(quizResponse.quiz)
             log.info("$TAG Wrong Answers: ${answers.joinToString()}")
             log.info("$TAG Raw quiz is parsed.")
-            val quiz = Quiz(summary, question, answers, rightAnswer)
+            val quiz = Quiz(quizResponse.id, summary, question, answers, rightAnswer)
             verifyQuiz(quiz)
             return quiz
         } catch (e: Exception) {
             log.error("$TAG Error caught during raw quiz parsing. Original exception: ${e.message}. Original raw quiz: ${quizResponse.quiz}")
-            return Quiz("", "", emptyList(), "")
+            return Quiz("", "", "", emptyList(), "")
         }
 
     }

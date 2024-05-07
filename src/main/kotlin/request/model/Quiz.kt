@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * **Right answer:** Family
  */
 data class Quiz(
+    val id: String,
     val summary: String,
     val question: String,
     val wrong_answers: List<String>,
