@@ -44,6 +44,7 @@ class QuizBuilder {
 
             override fun onFailure(call: Call, e: IOException) {
                 log.error("$TAG Error caught during quiz building. Original exception: ${e.message}")
+                TAG = TAG.plus(": ${UUID.randomUUID()}")
                 questBuilderResponse = QuizBuilderResponse("")
             }
 
@@ -61,9 +62,16 @@ class QuizBuilder {
 
             }
         })
+        var attempt = 1
         while (questBuilderResponse == null) {
-            log.info("$TAG Waiting replicate.com answer...")
+            if (attempt > 20) {
+                log.info("$TAG Maximum attempts is reached but replicate.com didn't answered. Response empty Quiz.")
+                questBuilderResponse = QuizBuilderResponse("")
+                break
+            }
+            log.info("$TAG Attempt #$attempt to wait replicate.com answer...")
             Thread.sleep(500)
+            attempt++
         }
         // ToDo: also waiting little time because we have bug from Replicate side.
         Thread.sleep(2000)
@@ -120,7 +128,7 @@ class QuizBuilder {
             Input(
                 top_k = 0,
                 top_p = 0.9,
-                prompt = "Create one Quiz for learn English ${if (theme.isNotEmpty()) "about $theme " else ""}. \\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. One field: **Summary**.\\n2. One field: **Question**. \\n3. One text block named **Wrong Answers** with three wrong answers. \\n4. One text block named **Right answer** with right answer.",
+                prompt = "Create one Quiz for learn English ${if (theme.isNotEmpty()) "about $theme " else ""}. \\nDifficulty - ${difficulty}.\\nQuiz should have these fields:\\n1. One field: **Summary**.\\n2. One field: **Question**. \\n3. One text block named **Wrong Answers** with three wrong (incorrect English grammar) answers. \\n4. One text block named **Right answer** with right answer.",
                 temperature = 0.6,
                 system_prompt = "You are a English teacher",
                 length_penalty = 1,
@@ -221,7 +229,12 @@ class QuizBuilder {
         val block = regex.find(input)?.value ?: ""
         log.info("$TAG WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
-            val lines = block.split("\n")
+            var lines = block.split("\n")
+
+            // In case if new lines is appeared like one String line: :**\n\n* Will have travelled\n\n* Am going to travel\n\n* Have been travelling\n\n**
+            if (lines.size == 1) {
+                lines = block.split("\\n")
+            }
             val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
             val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([A-da-d]\\) )"), "") }
             return answers
@@ -235,7 +248,7 @@ class QuizBuilder {
     private fun getRightAnswer(input: String): String {
         val regex = Regex("(?<=Right [Aa]nswer)[\\S\\s]+")
         val block = regex.find(input)?.value ?: ""
-        log.info("$TAG WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
+        log.info("$TAG RightAnswer regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawAnswersLines = lines.filter { it.contains(Regex("[A-Za-z]")) }

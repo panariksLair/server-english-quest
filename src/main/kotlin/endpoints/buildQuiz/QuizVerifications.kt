@@ -34,7 +34,7 @@ class QuizVerifications(val quiz: Quiz) {
     private fun hasDuplicatedAnswers(): Boolean {
         val allAnswers = mutableListOf(quiz.right_answer).also { it.addAll(quiz.wrong_answers) }
         val uniqueAnswersCount = allAnswers.toSet().size
-        return if (uniqueAnswersCount == 4) {
+        return if (uniqueAnswersCount == allAnswers.size) {
             log.info("$TAG Duplicated answers verification is passed.")
             false
         } else {
