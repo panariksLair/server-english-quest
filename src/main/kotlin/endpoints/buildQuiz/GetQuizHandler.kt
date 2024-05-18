@@ -3,6 +3,7 @@ package com.github.panarik.endpoints.buildQuiz
 import com.github.panarik.endpoints.Handler
 import com.github.panarik.log
 import com.github.panarik.request.Request
+import com.github.panarik.request.model.replicate.Task
 import com.github.panarik.response.Response
 import com.sun.net.httpserver.HttpHandler
 
@@ -14,8 +15,9 @@ class GetQuizHandler : Handler(), HttpHandler {
         log.info("$TAG Starting response from client request...")
         if (isValidRequest(request)) {
             val difficulty = request.headers["Difficulty"]?.get(0) ?: "B1"
+            val task = Task(difficulty)
             log.info("$TAG Difficulty is $difficulty")
-            val quiz = QuizBuilder().build(difficulty)
+            val quiz = QuizBuilder().build(task)
             log.info("$TAG Quiz is created.")
             if (QuizVerifications(quiz).isValid()) {
                 val encodedQuiz = QuizParser().encode(quiz)

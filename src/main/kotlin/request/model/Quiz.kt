@@ -20,10 +20,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  */
 data class Quiz(
     val id: String,
+    val difficult: String,
+    val topic: String,
     val summary: String,
     val question: String,
     val wrong_answers: List<String>,
-    val right_answer: String
+    val right_answer: String,
+    val votes_positive: Int,
+    val votes_negative: Int
 ) {
 
 
