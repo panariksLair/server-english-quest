@@ -22,6 +22,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
 
+    //Database
+    implementation("org.postgresql:postgresql:42.7.3")
+
     //Testing
     testImplementation(kotlin("test"))
 }

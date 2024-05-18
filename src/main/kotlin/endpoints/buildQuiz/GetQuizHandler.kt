@@ -5,6 +5,7 @@ import com.github.panarik.log
 import com.github.panarik.request.Request
 import com.github.panarik.request.model.replicate.Task
 import com.github.panarik.response.Response
+import com.github.panarik.service.DatabaseManager
 import com.sun.net.httpserver.HttpHandler
 
 private const val TAG = "[GetQuizHandler]"
@@ -20,17 +21,20 @@ class GetQuizHandler : Handler(), HttpHandler {
             val quiz = QuizBuilder().build(task)
             log.info("$TAG Quiz is created.")
             if (QuizVerifications(quiz).isValid()) {
+                DatabaseManager.safe(quiz)
                 val encodedQuiz = QuizParser().encode(quiz)
-                log.info("$TAG Quiz encoded and ready to send.")
+                log.info("$TAG Quiz encoded and ready to send. id=${quiz.id}")
                 return Response(200, encodedQuiz)
             } else {
-                log.info("$TAG Sending invalid quiz answer.")
-                return Response(204, "Invalid Quiz")
+                val response = Response(204, "")
+                log.info("$TAG Sending invalid quiz answer. Code=${response.code}, Body=${response.body}")
+                return response
             }
 
         } else {
-            log.info("$TAG Sending client error answer.")
-            return Response(404, "Client error")
+            val response = Response(404, "")
+            log.info("$TAG Sending client error answer. Code=${response.code}, Body=${response.body}")
+            return response
         }
     }
 

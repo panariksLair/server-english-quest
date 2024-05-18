@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  */
 data class Quiz(
     val id: String,
+    val reviewed: Boolean,
     val difficult: String,
     val topic: String,
     val summary: String,
@@ -28,11 +29,4 @@ data class Quiz(
     val right_answer: String,
     val votes_positive: Int,
     val votes_negative: Int
-) {
-
-
-    @JsonIgnore
-    fun isValid(): Boolean =
-        summary.isNotEmpty() && question.isNotEmpty() && wrong_answers.isNotEmpty() && right_answer.isNotEmpty()
-
-}
+)

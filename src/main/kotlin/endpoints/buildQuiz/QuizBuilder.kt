@@ -22,6 +22,7 @@ class QuizBuilder {
         val quizResponse = getRawQuiz(quizId)
         val quiz = Quiz(
             id = quizId,
+            reviewed = false,
             difficult = task.difficult,
             topic = task.topic,
             summary = quizResponse.getSummary(),

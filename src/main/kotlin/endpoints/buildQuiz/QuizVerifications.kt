@@ -9,7 +9,7 @@ class QuizVerifications(val quiz: Quiz) {
 
     fun isValid(): Boolean {
         log.info("$TAG Begin Quiz verification...")
-        val isValid = !hasEmptyFields() && !hasDuplicatedAnswers() && !questionContainsAnswer()
+        val isValid = !hasEmptyFields() && !hasDuplicatedAnswers()
         return if (isValid) {
             log.info("$TAG Quiz verification is passed.")
             true
@@ -42,17 +42,4 @@ class QuizVerifications(val quiz: Quiz) {
             true
         }
     }
-
-    private fun questionContainsAnswer(): Boolean {
-        val questionContainsAnswer = quiz.question.contains(quiz.right_answer) || quiz.question == quiz.right_answer
-        return if (questionContainsAnswer) {
-            log.error("$TAG Quiz question contains right answer!")
-            true
-        } else {
-            log.info("$TAG QuestionContainsAnswer verification is passed.")
-            false
-
-        }
-    }
-
 }
