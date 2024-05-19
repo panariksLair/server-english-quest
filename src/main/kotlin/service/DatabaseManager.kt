@@ -18,6 +18,7 @@ object DatabaseManager {
     fun connect() {
         db = PGSimpleDataSource()
         db.setUrl(CONNECTION_URL)
+        db.sslRootCert = "postgresql.crt"
         if (db.connection.isValid(10)) {
             log.info("$TAG Database connected.")
             connection = db.connection
