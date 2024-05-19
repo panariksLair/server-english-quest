@@ -1,5 +1,6 @@
 package com.github.panarik.service
 
+import com.github.panarik.endpoints.rate.model.QuizRate
 import com.github.panarik.log
 import com.github.panarik.model.Quiz
 import org.postgresql.ds.PGSimpleDataSource
@@ -38,6 +39,34 @@ object DatabaseManager {
         }
     }
 
+    fun rate(quiz: QuizRate): Boolean {
+        val rateColumn = when (quiz.rate) {
+            1 -> "votes_positive"
+            -1 -> "votes_negative"
+            else -> {
+                log.error("$TAG Wrong rate caught from client. Sending error message.")
+                return false
+            }
+        }
+        try {
+            val selectQuery = "SELECT $rateColumn FROM quizes WHERE id=?"
+            val preparedSelect = connection.prepareStatement(selectQuery)
+            preparedSelect.setString(1, quiz.quiz_id)
+            val existingRateResult = preparedSelect.executeQuery()
+            existingRateResult.next()
+            val existingRate = existingRateResult.getString(rateColumn).toInt()
+            val updateQuery = "UPDATE quizes SET $rateColumn = ? WHERE id = ?"
+            val preparedUpdate = connection.prepareStatement(updateQuery)
+            preparedUpdate.setInt(1, existingRate + 1)
+            preparedUpdate.setString(2, quiz.quiz_id)
+            preparedUpdate.execute()
+            return true
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during database operations. Message: ${e.message}")
+            return false
+        }
+    }
+
     private fun getQuery(quiz: Quiz): String {
         try {
             val summary = quiz.summary.replace("'", "''")
@@ -51,7 +80,6 @@ object DatabaseManager {
             log.error("$TAG Error caught during parse query. Message: ${e.message}")
             return ""
         }
-
     }
 
 }

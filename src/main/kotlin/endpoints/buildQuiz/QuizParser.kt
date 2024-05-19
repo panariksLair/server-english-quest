@@ -5,15 +5,24 @@ import com.github.panarik.log
 import com.github.panarik.model.Quiz
 import com.github.panarik.model.QuizSession
 
+private const val TAG = "[QuizParser]"
+
 class QuizParser {
 
-    fun encode(quiz: Quiz): String =
+    fun encode(quiz: Quiz): String? =
         try {
-            val result = jacksonObjectMapper().writeValueAsString(QuizSession(quiz.id, quiz))
-            result
+            jacksonObjectMapper().writeValueAsString(QuizSession(quiz.id, quiz))
         } catch (e: Exception) {
-            log.error("Error caught during quiz writing. Original exception: ${e.message}")
-            ""
+            log.error("$TAG Error caught during quiz writing. Original exception: ${e.message}")
+            null
+        }
+
+    fun decode(input: String): Quiz? =
+        try {
+            jacksonObjectMapper().readValue(input, Quiz::class.java)
+        } catch (e: Exception) {
+            log.error("$TAG Error caught during quiz reading. Original exception: ${e.message}")
+            null
         }
 
 

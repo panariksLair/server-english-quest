@@ -8,10 +8,11 @@ import com.github.panarik.request.Request
 import com.github.panarik.response.Response
 import com.github.panarik.response.ResponseSender
 import com.sun.net.httpserver.HttpExchange
+import com.sun.net.httpserver.HttpHandler
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-abstract class Handler {
+abstract class Handler : HttpHandler {
 
     abstract fun responseFromClientRequest(request: Request): Response
 
@@ -23,7 +24,7 @@ abstract class Handler {
     /**
      * Main handler method which handle all requests. All child types of requests (GET, POST, etc.) will be handled child method which overrides responseFromClientRequest() method.
      */
-    open fun handle(exchange: HttpExchange) {
+    override fun handle(exchange: HttpExchange) {
         val request = getRequest(exchange)
         val response =
             responseFromServerRules() ?: responseFromCommonVerifications(request) ?: responseFromClientRequest(request)

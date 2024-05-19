@@ -1,6 +1,7 @@
 package com.github.panarik
 
 import com.github.panarik.endpoints.buildQuiz.GetQuizHandler
+import com.github.panarik.endpoints.rate.RateHandler
 import com.github.panarik.service.DatabaseManager
 import com.sun.net.httpserver.HttpServer
 import org.slf4j.Logger
@@ -18,6 +19,7 @@ object Server {
         val server = HttpServer.create(InetSocketAddress(ServerProperties.port), 0)
         log.info("Server is started on port ${ServerProperties.port}.")
         server.createContext("/quiz", GetQuizHandler())
+        server.createContext("/rate", RateHandler())
         server.start()
     }
 

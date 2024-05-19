@@ -6,11 +6,10 @@ import com.github.panarik.request.Request
 import com.github.panarik.endpoints.buildQuiz.model.replicate.Task
 import com.github.panarik.response.Response
 import com.github.panarik.service.DatabaseManager
-import com.sun.net.httpserver.HttpHandler
 
 private const val TAG = "[GetQuizHandler]"
 
-class GetQuizHandler : Handler(), HttpHandler {
+class GetQuizHandler : Handler() {
 
     override fun responseFromClientRequest(request: Request): Response {
         log.info("$TAG Starting response from client request...")
@@ -23,8 +22,14 @@ class GetQuizHandler : Handler(), HttpHandler {
             if (QuizVerifications(quiz).isValid()) {
                 DatabaseManager.safe(quiz)
                 val encodedQuiz = QuizParser().encode(quiz)
-                log.info("$TAG Quiz encoded and ready to send. id=${quiz.id}")
-                return Response(200, encodedQuiz)
+                if (encodedQuiz != null) {
+                    log.info("$TAG Quiz encoded and ready to send. id=${quiz.id}")
+                    return Response(200, encodedQuiz)
+                } else {
+                    log.error("$TAG Failed during Quiz parsing. Sending empty body.")
+                    return Response(204, "")
+                }
+
             } else {
                 val response = Response(204, "")
                 log.info("$TAG Sending invalid quiz answer. Code=${response.code}, Body=${response.body}")
@@ -39,7 +44,6 @@ class GetQuizHandler : Handler(), HttpHandler {
     }
 
     override fun isValidRequest(request: Request): Boolean {
-        log.info("$TAG Request is valid.")
         return true
     }
 }
