@@ -3,7 +3,7 @@ package com.github.panarik.endpoints.buildQuiz
 import com.github.panarik.endpoints.Handler
 import com.github.panarik.log
 import com.github.panarik.request.Request
-import com.github.panarik.request.model.replicate.Task
+import com.github.panarik.endpoints.buildQuiz.model.replicate.Task
 import com.github.panarik.response.Response
 import com.github.panarik.service.DatabaseManager
 import com.sun.net.httpserver.HttpHandler

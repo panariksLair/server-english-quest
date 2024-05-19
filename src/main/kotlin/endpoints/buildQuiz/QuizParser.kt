@@ -2,8 +2,8 @@ package com.github.panarik.endpoints.buildQuiz
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.panarik.log
-import com.github.panarik.request.model.Quiz
-import com.github.panarik.request.model.QuizSession
+import com.github.panarik.model.Quiz
+import com.github.panarik.model.QuizSession
 
 class QuizParser {
 

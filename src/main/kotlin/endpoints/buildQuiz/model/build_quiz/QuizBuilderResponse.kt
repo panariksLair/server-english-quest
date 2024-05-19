@@ -1,4 +1,4 @@
-package com.github.panarik.request.model.replicate.build_quiz
+package com.github.panarik.endpoints.buildQuiz.model.build_quiz
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 

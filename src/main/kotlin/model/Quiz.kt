@@ -1,6 +1,4 @@
-package com.github.panarik.request.model
-
-import com.fasterxml.jackson.annotation.JsonIgnore
+package com.github.panarik.model
 
 /**
  * Raw import:

@@ -1,7 +1,7 @@
 package com.github.panarik.service
 
 import com.github.panarik.log
-import com.github.panarik.request.model.Quiz
+import com.github.panarik.model.Quiz
 import org.postgresql.ds.PGSimpleDataSource
 import java.sql.Connection
 import java.sql.Statement

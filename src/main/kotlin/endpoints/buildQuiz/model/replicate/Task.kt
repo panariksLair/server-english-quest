@@ -1,4 +1,4 @@
-package com.github.panarik.request.model.replicate
+package com.github.panarik.endpoints.buildQuiz.model.replicate
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.panarik.log

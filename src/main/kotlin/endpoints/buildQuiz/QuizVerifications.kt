@@ -1,7 +1,7 @@
 package com.github.panarik.endpoints.buildQuiz
 
 import com.github.panarik.log
-import com.github.panarik.request.model.Quiz
+import com.github.panarik.model.Quiz
 
 private const val TAG = "[QuizVerifications]"
 

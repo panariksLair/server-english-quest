@@ -1,7 +1,10 @@
-package com.github.panarik.request.model.replicate.get_quiz
+package com.github.panarik.endpoints.buildQuiz.model.get_quiz
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.github.panarik.log
+
+private const val TAG = "[QuizResponse]"
 
 /**
  * Example:
@@ -41,18 +44,13 @@ import com.github.panarik.log
  *  }
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class RawQuiz(
-    val id: String,
-    val output: List<String>,
-    val quiz: String = output.joinToString("")
-) {
+data class QuizResponse(val id: String, val output: List<String>, val quiz: String = output.joinToString("")) {
 
-    private val tag = "[QuizResponse]"
-
+    @JsonIgnore
     fun getSummary(): String {
         val regex = Regex("(?<=Summary)([\\S\\s]+)(?=(Question))")
         val block = regex.find(quiz)?.value ?: ""
-        log.info("$tag Summary regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
+        log.info("$TAG Summary regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawSummary = lines.first { it.contains(Regex("[A-Za-z]")) }
@@ -63,18 +61,19 @@ data class RawQuiz(
             } else {
                 summary = rawSummary.replace(prefix, "")
             }
-            log.info("$tag Summary: $summary")
+            log.info("$TAG Summary: $summary")
             return summary
         } catch (e: Exception) {
-            log.error("$tag Error caught during parsing 'Summary' block. Original exception: ${e.message}. Original question block: $block")
+            log.error("$TAG Error caught during parsing 'Summary' block. Original exception: ${e.message}. Original question block: $block")
             return ""
         }
     }
 
+    @JsonIgnore
     fun getQuestion(): String {
         val regex = Regex("(?<=Question)([\\S\\s]+)(?=(Wrong [Aa]nswers))")
         val block = regex.find(quiz)?.value ?: ""
-        log.info("$tag Question regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
+        log.info("$TAG Question regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val questionLines = lines.filter { it.contains(Regex("[A-Za-z]")) }.toMutableList()
@@ -86,19 +85,19 @@ data class RawQuiz(
             }
             questionLines[0] = questionFirstLine
             val question = questionLines.joinToString("\n")
-            log.info("$tag Question: $question")
+            log.info("$TAG Question: $question")
             return question
         } catch (e: Exception) {
-            log.error("$tag Error caught during parsing 'Question' block. Original exception: ${e.message}. Original question block: $block")
+            log.error("$TAG Error caught during parsing 'Question' block. Original exception: ${e.message}. Original question block: $block")
             return ""
         }
-
     }
 
+    @JsonIgnore
     fun getRightAnswer(): String {
         val regex = Regex("(?<=Right [Aa]nswer)[\\S\\s]+")
         val block = regex.find(quiz)?.value ?: ""
-        log.info("$tag RightAnswer regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
+        log.info("$TAG RightAnswer regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             val lines = block.split("\n")
             val rawAnswersLines = lines.filter { it.contains(Regex("[A-Za-z]")) }
@@ -110,7 +109,7 @@ data class RawQuiz(
                 } else {
                     firstLine.replace(prefix, "")
                 }
-                log.info("$tag Right Answer: $rightAnswer")
+                log.info("$TAG Right Answer: $rightAnswer")
                 return rightAnswer
             } else return ""
         } catch (e: Exception) {
@@ -119,10 +118,11 @@ data class RawQuiz(
         }
     }
 
+    @JsonIgnore
     fun getWrongAnswers(): List<String> {
         val regex = Regex("(?<=Wrong [Aa]nswers)([\\S\\s]+)(?=(Right [Aa]nswer))")
         val block = regex.find(quiz)?.value ?: ""
-        log.info("$tag WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
+        log.info("$TAG WrongAnswers regex: ${regex.pattern}, input block: <Begin block>\n$block\n<End block>")
         try {
             var lines = block.split("\n")
 
@@ -132,10 +132,10 @@ data class RawQuiz(
             }
             val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
             val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([A-da-d]\\) )"), "") }
-            log.info("$tag Wrong Answers: ${answers.joinToString()}")
+            log.info("$TAG Wrong Answers: ${answers.joinToString()}")
             return answers
         } catch (e: Exception) {
-            log.error("$tag Error caught during parsing 'Wrong answer' block. Original exception: ${e.message}. Original question block: $block")
+            log.error("$TAG Error caught during parsing 'Wrong answer' block. Original exception: ${e.message}. Original question block: $block")
             return emptyList()
         }
 

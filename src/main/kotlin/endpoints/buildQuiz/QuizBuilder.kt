@@ -3,10 +3,10 @@ package com.github.panarik.endpoints.buildQuiz
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.panarik.log
-import com.github.panarik.request.model.Quiz
-import com.github.panarik.request.model.replicate.Task
-import com.github.panarik.request.model.replicate.build_quiz.QuizBuilderResponse
-import com.github.panarik.request.model.replicate.get_quiz.QuizResponse
+import com.github.panarik.model.Quiz
+import com.github.panarik.endpoints.buildQuiz.model.replicate.Task
+import com.github.panarik.endpoints.buildQuiz.model.build_quiz.QuizBuilderResponse
+import com.github.panarik.endpoints.buildQuiz.model.get_quiz.QuizResponse
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.UUID
