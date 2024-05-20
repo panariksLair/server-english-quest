@@ -18,7 +18,7 @@ class QuizBuilder {
     fun build(task: Task): Quiz {
         log.info("$tag Start building new quiz...")
         val quizId = createRawQuiz(task).id
-        Thread.sleep(2000) // ToDo: also waiting little time because we have bug from Replicate side.
+        Thread.sleep(5000) // ToDo: also waiting little time because we have bug from Replicate side.
         val quizResponse = getRawQuiz(quizId)
         val quiz = Quiz(
             id = quizId,
@@ -38,7 +38,7 @@ class QuizBuilder {
 
     private fun createRawQuiz(task: Task): QuizBuilderResponse {
         val request = Request.Builder()
-            .url("https://api.replicate.com/v1/models/meta/meta-llama-3-8b-instruct/predictions")
+            .url("https://api.replicate.com/v1/models/meta/meta-llama-3-70b-instruct/predictions")
             .method("POST", task.request.toRequestBody())
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer r8_TF9Xx4keKqZHPRfFUYXEZ344nlyg5Iu1QiT3x")

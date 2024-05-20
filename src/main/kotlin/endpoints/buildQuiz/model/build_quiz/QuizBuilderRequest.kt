@@ -1,4 +1,6 @@
-package com.github.panarik.request.model.replicate.buildQuiz
+package com.github.panarik.endpoints.buildQuiz.model.build_quiz
+
+import com.github.panarik.request.model.replicate.buildQuiz.Input
 
 /**
  * Example:

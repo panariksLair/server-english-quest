@@ -131,7 +131,7 @@ data class QuizResponse(val id: String, val output: List<String>, val quiz: Stri
                 lines = block.split("\\n")
             }
             val rawAnswers = lines.filter { it.contains(Regex("[A-Za-z]")) }
-            val answers = rawAnswers.map { it.replace(Regex("(^[* \\d\\.]+)|([A-da-d]\\) )"), "") }
+            val answers = rawAnswers.map { it.replace(Regex("(^[*• \\d\\.\\-]+)|([A-da-d]\\) )"), "") }
             log.info("$TAG Wrong Answers: ${answers.joinToString()}")
             return answers
         } catch (e: Exception) {
