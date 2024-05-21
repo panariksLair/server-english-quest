@@ -21,7 +21,12 @@ class QuizVerifications(val quiz: Quiz) {
 
     private fun hasEmptyFields(): Boolean {
         val hasEmptyFields =
-            quiz.summary.isEmpty() || quiz.question.isEmpty() || quiz.wrong_answers.size < 3 || quiz.right_answer.isEmpty()
+            quiz.summary.isEmpty() ||
+                    quiz.question.isEmpty() ||
+                    quiz.wrong_answer_1.isEmpty() ||
+                    quiz.wrong_answer_2.isEmpty() ||
+                    quiz.wrong_answer_3.isEmpty() ||
+                    quiz.right_answer.isEmpty()
         return if (hasEmptyFields) {
             log.error("$TAG Quiz has empty fields!")
             true
@@ -32,7 +37,7 @@ class QuizVerifications(val quiz: Quiz) {
     }
 
     private fun hasDuplicatedAnswers(): Boolean {
-        val allAnswers = mutableListOf(quiz.right_answer).also { it.addAll(quiz.wrong_answers) }
+        val allAnswers = mutableListOf(quiz.right_answer, quiz.wrong_answer_1, quiz.wrong_answer_2, quiz.wrong_answer_3)
         val uniqueAnswersCount = allAnswers.toSet().size
         return if (uniqueAnswersCount == allAnswers.size) {
             log.info("$TAG Duplicated answers verification is passed.")

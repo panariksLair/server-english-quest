@@ -23,7 +23,9 @@ data class Quiz(
     val topic: String,
     val summary: String,
     val question: String,
-    val wrong_answers: List<String>,
+    val wrong_answer_1: String,
+    val wrong_answer_2: String,
+    val wrong_answer_3: String,
     val right_answer: String,
     val votes_positive: Int,
     val votes_negative: Int

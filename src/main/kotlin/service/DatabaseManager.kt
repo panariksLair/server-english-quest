@@ -72,9 +72,11 @@ object DatabaseManager {
             val summary = quiz.summary.replace("'", "''")
             val question = quiz.question.replace("'", "''")
             val rightAnswer = quiz.right_answer.replace("'", "''")
-            val wrongAnswers = quiz.wrong_answers.map { it.replace("'", "''") }
+            val wrongAnswer1 = quiz.wrong_answer_1.replace("'", "''")
+            val wrongAnswer2 = quiz.wrong_answer_2.replace("'", "''")
+            val wrongAnswer3 = quiz.wrong_answer_3.replace("'", "''")
             val query =
-                "insert into quizes (id, reviewed, difficult, topic, votes_positive, votes_negative, summary, question, right_answer, wrong_answer_1, wrong_answer_2, wrong_answer_3) VALUES ('${quiz.id}', ${quiz.reviewed}, '${quiz.difficult}', '${quiz.topic}', ${quiz.votes_positive}, ${quiz.votes_negative}, '${summary}', '${question}', '${rightAnswer}', '${wrongAnswers[0]}', '${wrongAnswers[1]}', '${wrongAnswers[2]}');"
+                "insert into quizes (id, reviewed, difficult, topic, votes_positive, votes_negative, summary, question, right_answer, wrong_answer_1, wrong_answer_2, wrong_answer_3) VALUES ('${quiz.id}', ${quiz.reviewed}, '${quiz.difficult}', '${quiz.topic}', ${quiz.votes_positive}, ${quiz.votes_negative}, '${summary}', '${question}', '${rightAnswer}', '${wrongAnswer1}', '${wrongAnswer2}', '${wrongAnswer3}');"
             return query
         } catch (e: Exception) {
             log.error("$TAG Error caught during parse query. Message: ${e.message}")

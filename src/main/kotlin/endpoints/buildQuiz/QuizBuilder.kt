@@ -27,7 +27,9 @@ class QuizBuilder {
             topic = task.topic,
             summary = quizResponse.getSummary(),
             question = quizResponse.getQuestion(),
-            wrong_answers = quizResponse.getWrongAnswers(),
+            wrong_answer_1 = quizResponse.getWrongAnswers()[0],
+            wrong_answer_2 = quizResponse.getWrongAnswers()[1],
+            wrong_answer_3 = quizResponse.getWrongAnswers()[2],
             right_answer = quizResponse.getRightAnswer(),
             votes_positive = 0,
             votes_negative = 0
